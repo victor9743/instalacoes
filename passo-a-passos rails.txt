@@ -1,0 +1,10 @@
+passo-a-passo para seguir ao criar de uma aplicação rails
+
+1- ao gerar scaffolds com models, sempre colocar os nomes das colunas e models em inglês
+2- utilizar o i18n
+3- ao criar os migrates que possuem foreign Keys, deixa em cascata
+4- sempre usar os validates dos models e validates personalizados em vez de usar o controller
+5- aplicar o i18n nas mensagem dos validates, return dos controllers e em textos estáticos nas views ex: (menus, textos explicativos, etc...)
+6- usar o esbuild para configuração de js css
+7- ao usar mais de um layout, sempre usar o layout application para carregar as estilizações e scripts que usados em layout filhos
+8- nos inputs, forms, carregamento de scripts e estilos, sempre usar tag rails
