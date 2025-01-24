@@ -1,0 +1,7 @@
+passo a passo criar chave publica no ubuntu
+ssh-keygen -t rsa -b 4096 -C "email@gmail.com"
+eval "$(ssh-agent -s)"
+ssh-add ~/.ssh/id_rsa
+
+visualizar chave pública:
+cat ~/.ssh/id_rsa.pub
