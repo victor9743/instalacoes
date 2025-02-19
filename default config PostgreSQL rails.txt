@@ -1,0 +1,28 @@
+default config PostgreSQL rails
+1- gem "pg"
+2- bundle install
+3- alter config in: config/database.yml
+  default: &default
+  adapter: postgresql
+  encoding: unicode
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  username: <%= ENV["DB_USERNAME"] %>
+  password: <%= ENV["DB_PASSWORD"] %>
+  host: <%= ENV.fetch("DB_HOST") { "localhost" } %>
+  port: <%= ENV.fetch("DB_PORT") { 5432 } %>
+
+development:
+  <<: *default
+  database: name_db
+
+test:
+  <<: *default
+  database: name_db
+
+production:
+  <<: *default
+  database: rede_social_db
+  username: <%= ENV["DB_USERNAME"] %>
+  password: <%= ENV["DB_PASSWORD"] %>
+
+4- optional add gem 'dotenv-rails', groups: [:development, :test], to .env variables

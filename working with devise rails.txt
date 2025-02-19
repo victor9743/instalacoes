@@ -1,0 +1,8 @@
+working with devise rails
+
+1- gem 'devise'
+2- bundle install
+3- rails generate devise:install
+4- copy: config.action_mailer.default_url_options = { host: 'localhost', port: 3000 } and paste into:  config/environments/development.rb:
+5- rails generate devise User
+6- rails db:migrate
