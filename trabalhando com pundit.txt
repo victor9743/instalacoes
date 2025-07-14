@@ -1,0 +1,41 @@
+trabalhando com pundit
+instalar a gem
+gem "pundit"
+
+colocar o application controller
+
+include Pundit
+protect_from_forgery
+
+instalar o pundit na aplicação
+rails g pundit:install
+
+criar um novo pundit
+rails g pundit:policy User
+
+colocar nos método em que deseja utiliza o pundit no controller
+authorize Model
+
+criar regra dentro no policy
+
+def index?
+1 == 1 // exemplo
+end
+
+
+ajustando mensagem de erro
+rescue_from Pundit::NotAuthorizedError, with: :user_not_authorized
+
+private
+def user_not_authorized
+  flash[:alert] = "Você não tem permissão"
+  redirect_to (request.referrer || root_path)
+end
+
+
+ajsutando policy na view
+
+<% if policy(@variavel).index? %>
+  Conteudo aqui...
+<% end %>
+
