@@ -6,3 +6,5 @@ working with devise rails
 4- copy: config.action_mailer.default_url_options = { host: 'localhost', port: 3000 } and paste into:  config/environments/development.rb:
 5- rails generate devise User
 6- rails db:migrate
+7- gerando views do devise: rails generate devise:views
+8- gerando controller com nome users: rails generate devise:controllers users
