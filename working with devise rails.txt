@@ -8,3 +8,8 @@ working with devise rails
 6- rails db:migrate
 7- gerando views do devise: rails generate devise:views
 8- gerando controller com nome users: rails generate devise:controllers users
+9- Adicionar no router.rb: 
+devise_for :users, controllers: {
+  sessions: 'users/sessions',
+  registrations: 'users/registrations'
+}
