@@ -10,3 +10,10 @@ sudo apt-get install libqt6core6t64 libqt6dbus6t64 libqt6gui6t64 libqt6help6 lib
 
 Agora instale o VirtualBox corretamente:
 sudo apt-get install ./Downloads/virtualbox-7.1_7.1.12-169651~Ubuntu~noble_amd64.deb (baixar o arquivo antes)
+
+
+- se der erro acima, rodar estes comandos:
+wget -q https://www.virtualbox.org/download/oracle_vbox_2016.asc -O- | sudo apt-key add -
+echo "deb [arch=amd64] https://download.virtualbox.org/virtualbox/debian $(lsb_release -cs) contrib" | sudo tee /etc/apt/sources.list.d/virtualbox.list
+sudo apt update
+sudo apt install virtualbox-7.1
