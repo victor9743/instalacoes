@@ -1,0 +1,81 @@
+bundle install; bundle exec rake assets:precompile; bundle exec rake assets:clean;Beleza! Vou te mostrar como usar o Kaminari passo a passo para fazer paginação no Rails.
+
+1. Adicionar a Gem
+No seu Gemfile:
+
+ruby
+Copiar
+Editar
+gem 'kaminari'
+Depois rode:
+
+bash
+Copiar
+Editar
+bundle install
+2. Paginando os Registros no Controller
+No seu controller, use o método .page (e opcional .per):
+
+ruby
+Copiar
+Editar
+@produtos = Produto.page(params[:page]).per(10)
+params[:page]: Vem da URL (ex: ?page=2)
+
+.per(10): Limita para 10 registros por página.
+
+3. Exibir a Lista no View (ERB ou HAML)
+Na sua view (index.html.erb por exemplo):
+
+erb
+Copiar
+Editar
+<% @produtos.each do |produto| %>
+  <p><%= produto.nome %></p>
+<% end %>
+
+<%= paginate @produtos %>
+4. Estilizar a Paginação (Bootstrap, Tailwind, etc.)
+Você pode instalar temas prontos do Kaminari. Exemplo para Bootstrap:
+
+bash
+Copiar
+Editar
+rails g kaminari:views bootstrap4
+Para Tailwind:
+
+bash
+Copiar
+Editar
+rails g kaminari:views tailwindcss
+5. Customizar o Número de Itens por Página (Global)
+Se quiser definir um padrão global, crie um initializer:
+
+bash
+Copiar
+Editar
+rails g kaminari:config
+No arquivo config/initializers/kaminari_config.rb:
+
+ruby
+Copiar
+Editar
+Kaminari.configure do |config|
+  config.default_per_page = 20
+  # config.max_per_page = nil
+  # config.window = 4
+  # config.outer_window = 0
+  # config.left = 0
+  # config.right = 0
+  # config.page_method_name = :page
+  # config.param_name = :page
+  # config.max_pages = nil
+  # config.params_on_first_page = false
+end
+6. URL com Parâmetros Extras
+Se você tem filtros na URL e quer manter ao mudar de página:
+
+erb
+Copiar
+Editar
+<%= paginate @produtos, params: { categoria: params[:categoria] } %>
