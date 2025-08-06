@@ -1,0 +1,31 @@
+# fazer o update do linux e instalar essenciais 
+sudo apt update
+sudo apt install -y build-essential libssl-dev libreadline-dev zlib1g-dev libffi-dev libyaml-dev
+
+# Clonar rbenv
+git clone https://github.com/rbenv/rbenv.git ~/.rbenv
+
+# Adicionar rbenv ao PATH e inicialização do shell
+echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> ~/.bashrc
+echo 'eval "$(rbenv init -)"' >> ~/.bashrc
+
+# Se usa zsh, substitua ~/.bashrc por ~/.zshrc
+
+# Recarregar o shell
+source ~/.bashrc
+
+# Verificar instalação do rbenv
+rbenv --version
+
+# Instalar ruby-build (plugin para instalar rubys)
+git clone https://github.com/rbenv/ruby-build.git ~/.rbenv/plugins/ruby-build
+
+
+# Instale o Ruby 3.3.0
+rbenv install 3.3.0
+
+# Atualizar o RubyGems (gerenciador de gems do Ruby)
+gem update --system
+
+# gem install rails
+gem install rails -v 7.0.6
