@@ -1,0 +1,20 @@
+---- COMANDOS LINUX -----
+
+wc: Conta a quantidade de linhas de um arquivo
+wc -l < nome_do_arquivo 
+
+ps -f : visualizar processos no terminal
+
+
+sort : faz ordenação dos caracteres dentro de um arquivo
+sort -n : ordenando números
+sort -m : ordenando meses
+
+sort arquivo.txt
+
+
+top : gerencia processos na maquina
+
+ps aux | head : gerenciando processos mais utilizados
+
+renice -n 5 9999 reiniciar processo espeficifo
