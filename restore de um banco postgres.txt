@@ -1,0 +1,2 @@
+fazer um restore de um banco postgres
+sudo -u postgres pg_restore -d sisca_db -c -v sisca-20250810.dump

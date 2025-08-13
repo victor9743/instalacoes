@@ -1,0 +1,36 @@
+tabalhando com tailwind e react com nodejs na versão 22.18
+
+npm install -D tailwindcss@^3.4.0 postcss@^8.4.31 autoprefixer@^10.4.16
+
+npx tailwindcss init -p --full
+
+Crie manualmente os arquivos de configuração:
+
+tailwind.config.js
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: [
+    "./src/**/*.{js,jsx,ts,tsx}",
+    "./public/index.html"
+  ],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+}
+
+
+postcss.config.js
+
+module.exports = {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+}
+
+Adicione ao seu arquivo CSS principal (src/index.css):
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
