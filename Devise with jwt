@@ -1,0 +1,555 @@
+Perfeito 👍
+Vamos fazer isso de forma prática e direta:
+não colocar --api na criação da api
+Você quer usar Devise com JWT (JSON Web Token) no Rails — ou seja, autenticação sem sessões, ideal para APIs (por exemplo, um backend Rails + frontend React/Vue/etc).
+
+🚀 Passo a passo: Devise + JWT no Rails
+1. Adicione as gems
+
+No seu Gemfile:
+
+gem 'devise'
+gem 'devise-jwt'
+
+
+E rode:
+
+bundle install
+
+2. Configure o Devise
+
+Se ainda não fez:
+
+rails generate devise:install
+
+
+Depois:
+
+rails generate devise User
+rails db:migrate
+
+3. Adicione o JWT ao modelo User
+
+Abra app/models/user.rb e adicione o módulo do jwt:
+
+class User < ApplicationRecord
+  # módulos padrão do Devise
+  devise :database_authenticatable,
+         :registerable,
+         :recoverable,
+         :rememberable,
+         :validatable,
+         :jwt_authenticatable,
+         jwt_revocation_strategy: self
+         
+  # Estratégia simples (sem blacklist)
+  def self.jwt_revoked?(payload, user)
+    false
+  end
+
+  def self.revoke_jwt(payload, user)
+    # opcionalmente pode registrar o logout
+  end
+end
+
+
+💡 A linha jwt_revocation_strategy: self é usada quando você não quer armazenar tokens revogados em banco (modo stateless).
+
+4. Configure o Devise para usar JWT
+
+No arquivo config/initializers/devise.rb, adicione dentro do bloco Devise.setup:
+
+Devise.setup do |config|
+  # ... outras configs do Devise
+
+  config.jwt do |jwt|
+    jwt.secret = Rails.application.credentials.fetch(:secret_key_base)
+    jwt.dispatch_requests = [
+      ['POST', %r{^/login$}],
+      ['POST', %r{^/users/sign_in$}]
+    ]
+    jwt.revocation_requests = [
+      ['DELETE', %r{^/logout$}],
+      ['DELETE', %r{^/users/sign_out$}]
+    ]
+    jwt.expiration_time = 30.minutes.to_i
+  end
+end
+
+5. Crie as rotas
+
+No seu config/routes.rb:
+
+Rails.application.routes.draw do
+  devise_for :users,
+             defaults: { format: :json },
+             controllers: {
+               sessions: 'users/sessions',
+               registrations: 'users/registrations'
+             }
+end
+
+6. Crie controladores personalizados
+
+Para retornar respostas JSON no login e cadastro.
+
+app/controllers/users/sessions_controller.rb
+class Users::SessionsController < Devise::SessionsController
+  respond_to :json
+
+  private
+
+  def respond_with(resource, _opts = {})
+    render json: { message: 'Login realizado com sucesso!', user: resource }, status: :ok
+  end
+
+  def respond_to_on_destroy
+    render json: { message: 'Logout realizado com sucesso!' }, status: :ok
+  end
+end
+
+app/controllers/users/registrations_controller.rb
+class Users::RegistrationsController < Devise::RegistrationsController
+  respond_to :json
+
+  private
+
+  def respond_with(resource, _opts = {})
+    if resource.persisted?
+      render json: { message: 'Usuário criado com sucesso!', user: resource }, status: :ok
+    else
+      render json: { errors: resource.errors.full_messages }, status: :unprocessable_entity
+    end
+  end
+end
+
+7. Teste as rotas
+Criar usuário
+POST /users
+Content-Type: application/json
+
+{
+  "user": {
+    "email": "teste@email.com",
+    "password": "123456"
+  }
+}
+
+Login
+POST /users/sign_in
+Content-Type: application/json
+
+{
+  "user": {
+    "email": "teste@email.com",
+    "password": "123456"
+  }
+}
+
+
+✅ O token JWT virá no header da resposta:
+
+Authorization: Bearer <token>
+
+Logout
+DELETE /users/sign_out
+Authorization: Bearer <token>
+
+8. Proteger rotas
+
+Em qualquer controller, use:
+
+before_action :authenticate_user!
+
+
+Isso garante que o usuário só acesse se enviar o JWT válido no header.
+
+9. Frontend / Cliente HTTP
+
+Envie o token em cada requisição autenticada:
+
+Authorization: Bearer <token>
+
+✅ Resultado final
+
+Você tem:
+
+Cadastro e login via JSON.
+
+Autenticação sem cookies, via JWT.
+
+Proteção de rotas com authenticate_user!.
+
+Total compatibilidade com React, Vue, mobile apps etc.
+
+Se quiser, posso te mostrar como integrar isso a um frontend React (com Axios) para login e persistência do token.
+Quer que eu monte esse exemplo também?
+
+Você disse:
+como salvar campos adicionais no model user ?
+O ChatGPT disse:
+
+Excelente pergunta 👏 — isso é essencial ao trabalhar com o Devise, especialmente quando você quer guardar informações além de email e password (como nome, telefone, cargo etc).
+
+Vamos ver como salvar campos adicionais no model User de forma limpa e compatível com Devise + JWT.
+
+🧩 Exemplo: adicionando campos extras ao User
+
+Digamos que você quer adicionar os seguintes campos:
+
+name (nome completo)
+
+role (papel do usuário, ex: admin, comum)
+
+1. Criar a migration
+
+No terminal:
+
+rails generate migration AddFieldsToUsers name:string role:string
+rails db:migrate
+
+
+Isso adiciona as colunas no banco de dados.
+
+2. Permitir os novos parâmetros no Devise
+
+Por padrão, o Devise não permite parâmetros extras (por segurança).
+Precisamos liberar manualmente.
+
+Crie (ou edite, se já existir) o arquivo:
+app/controllers/application_controller.rb
+
+class ApplicationController < ActionController::API
+  before_action :configure_permitted_parameters, if: :devise_controller?
+
+  protected
+
+  # Adiciona parâmetros permitidos
+  def configure_permitted_parameters
+    devise_parameter_sanitizer.permit(:sign_up, keys: [:name, :role])
+    devise_parameter_sanitizer.permit(:account_update, keys: [:name, :role])
+  end
+end
+
+
+💡 Se estiver usando ActionController::Base (aplicação com views HTML), o código é o mesmo.
+
+3. Permitir retorno dos campos extras (JSON)
+
+No seu controlador de registro app/controllers/users/registrations_controller.rb,
+verifique se você retorna o user completo no JSON:
+
+class Users::RegistrationsController < Devise::RegistrationsController
+  respond_to :json
+
+  private
+
+  def respond_with(resource, _opts = {})
+    if resource.persisted?
+      render json: {
+        message: 'Usuário criado com sucesso!',
+        user: resource
+      }, status: :ok
+    else
+      render json: { errors: resource.errors.full_messages }, status: :unprocessable_entity
+    end
+  end
+end
+
+
+Agora, ao criar um usuário, ele já vai incluir name e role no retorno.
+
+4. Teste a criação de usuário
+
+Requisição:
+
+POST /users
+Content-Type: application/json
+
+{
+  "user": {
+    "email": "teste@email.com",
+    "password": "123456",
+    "password_confirmation": "123456",
+    "name": "Victor Costa",
+    "role": "admin"
+  }
+}
+
+
+Resposta esperada:
+
+{
+  "message": "Usuário criado com sucesso!",
+  "user": {
+    "id": 1,
+    "email": "teste@email.com",
+    "name": "Victor Costa",
+    "role": "admin",
+    "created_at": "...",
+    "updated_at": "..."
+  }
+}
+
+5. Opcional: proteger o campo role
+
+Se você quiser que o role só seja definido por administradores, não inclua :role no sign_up acima — apenas no account_update ou defina manualmente no controller.
+
+Exemplo:
+
+def sign_up(resource_name, resource)
+  resource.role = 'user' # valor padrão
+  super
+end
+
+✅ Resumo
+Etapa	O que faz
+1	Cria a migration com os novos campos
+2	Permite parâmetros extras no ApplicationController
+3	Ajusta o retorno JSON
+4	Testa o cadastro via API
+5	(Opcional) Define regras de acesso para campos sensíveis
+
+Se quiser, posso te mostrar como atualizar esses campos (ex: editar nome e senha via JWT autenticado) — quer que eu inclua essa parte também?
+
+Você disse:
+erro: #<ActionDispatch::Request::Session::DisabledSessionError: Your application has sessions disabled. To write to the session you must first configure a session store>
+O ChatGPT disse:
+
+Perfeito 👀 — esse erro é muito comum quando você usa o Devise com JWT em uma API Rails.
+A mensagem:
+
+#<ActionDispatch::Request::Session::DisabledSessionError: Your application has sessions disabled. To write to the session you must first configure a session store>
+
+
+significa que o Devise está tentando usar sessões (cookies), mas a sua aplicação está configurada como API, ou seja, sem suporte a sessões.
+
+Vamos corrigir isso passo a passo 👇
+
+⚙️ Causa do problema
+
+Quando você cria uma aplicação com:
+
+rails new meu_app --api
+
+
+O Rails automaticamente desativa o uso de sessões, cookies e views.
+
+Porém, o Devise — por padrão — usa sessão para login/logout (pensando em sites HTML).
+Quando usamos JWT, não precisamos de sessão, então temos que avisar isso ao Devise.
+
+✅ Solução
+1. Desative sessões nos controllers do Devise
+
+Nos seus controladores personalizados (sessions_controller.rb e registrations_controller.rb), adicione:
+
+class Users::SessionsController < Devise::SessionsController
+  respond_to :json
+
+  private
+
+  def respond_with(resource, _opts = {})
+    render json: { message: 'Login realizado com sucesso!', user: resource }, status: :ok
+  end
+
+  def respond_to_on_destroy
+    render json: { message: 'Logout realizado com sucesso!' }, status: :ok
+  end
+
+  # 🔥 Impede Devise de tentar usar sessão
+  def verify_signed_out_user
+  end
+end
+
+2. Configure o Devise para não usar sessões
+
+No arquivo config/initializers/devise.rb, adicione essa linha dentro do bloco Devise.setup:
+
+Devise.setup do |config|
+  # ...suas configs...
+
+  # 🔥 Para API JWT, desativa o uso de session storage
+  config.skip_session_storage = [:http_auth, :params_auth]
+end
+
+3. Se ainda estiver dando erro, adicione isto na ApplicationController
+class ApplicationController < ActionController::API
+  # Garante que o Devise não tente usar sessão
+  before_action :skip_session
+
+  private
+
+  def skip_session
+    request.session_options[:skip] = true
+  end
+end
+
+4. Certifique-se de que está usando ActionController::API
+
+No topo do seu ApplicationController, deve estar assim:
+
+class ApplicationController < ActionController::API
+
+
+⚠️ Se estiver assim:
+
+class ApplicationController < ActionController::Base
+
+
+ele ainda tentará usar sessões/cookies — e causará o erro.
+
+5. (Opcional)
+
+Se você não criou o projeto com --api, mas quer esse comportamento, adicione no config/application.rb:
+
+config.api_only = true
+
+✅ Depois disso…
+
+Tudo deve funcionar normalmente com Devise + JWT.
+Ou seja:
+
+Login e logout sem cookies.
+
+Tokens JWT nos headers.
+
+Nenhuma tentativa de escrita em sessão.
+
+Se quiser, posso te mostrar como proteger uma rota autenticada usando o JWT (por exemplo: /profile) e testar se o token realmente está funcionando. Quer que eu te mostre isso?
+
+Você disse:
+após criar o usuário é possivel retornar o token ?
+O ChatGPT disse:
+
+Excelente pergunta — e sim, é totalmente possível ✅
+
+Por padrão, o Devise + devise-jwt só envia o token no header da resposta (no campo Authorization).
+Mas você pode acessá-lo e devolvê-lo no JSON junto com os dados do usuário — ideal quando está criando APIs (ex: React, Flutter, etc).
+
+Vamos direto ao ponto 👇
+
+⚙️ Contexto
+
+Você quer que ao criar o usuário (registro com POST /users) o backend retorne algo assim:
+
+{
+  "message": "Usuário criado com sucesso!",
+  "user": { "id": 1, "email": "teste@email.com", "name": "Victor" },
+  "token": "eyJhbGciOiJIUzI1NiJ9..."
+}
+
+✅ Passo a passo
+1. Entenda o que o Devise faz
+
+Quando o devise-jwt é configurado, ele gera o token automaticamente e o coloca no header da resposta:
+
+Authorization: Bearer <token>
+
+
+Para “capturar” esse token e incluir no JSON, você precisa interceptar a resposta logo depois da criação do usuário.
+
+2. Modifique o controlador de registro
+
+Edite o arquivo:
+app/controllers/users/registrations_controller.rb
+
+class Users::RegistrationsController < Devise::RegistrationsController
+  respond_to :json
+
+  private
+
+  def respond_with(resource, _opts = {})
+    if resource.persisted?
+      token = request.env['warden-jwt_auth.token']
+      render json: {
+        message: 'Usuário criado com sucesso!',
+        user: resource,
+        token: token
+      }, status: :ok
+    else
+      render json: {
+        errors: resource.errors.full_messages
+      }, status: :unprocessable_entity
+    end
+  end
+end
+
+
+💡 Aqui está o segredo:
+➡️ O token JWT fica disponível em request.env['warden-jwt_auth.token'].
+
+3. (Opcional) Faça o mesmo no login
+
+Edite app/controllers/users/sessions_controller.rb:
+
+class Users::SessionsController < Devise::SessionsController
+  respond_to :json
+
+  private
+
+  def respond_with(resource, _opts = {})
+    token = request.env['warden-jwt_auth.token']
+    render json: {
+      message: 'Login realizado com sucesso!',
+      user: resource,
+      token: token
+    }, status: :ok
+  end
+
+  def respond_to_on_destroy
+    render json: { message: 'Logout realizado com sucesso!' }, status: :ok
+  end
+end
+
+
+Assim, tanto o login quanto o cadastro retornam o token no corpo da resposta.
+
+4. Exemplo de retorno
+Requisição:
+POST /users
+Content-Type: application/json
+
+{
+  "user": {
+    "email": "victor@email.com",
+    "password": "123456",
+    "password_confirmation": "123456",
+    "name": "Victor"
+  }
+}
+
+Resposta:
+{
+  "message": "Usuário criado com sucesso!",
+  "user": {
+    "id": 1,
+    "email": "victor@email.com",
+    "name": "Victor",
+    "created_at": "...",
+    "updated_at": "..."
+  },
+  "token": "eyJhbGciOiJIUzI1NiJ9..."
+}
+
+5. Como usar o token
+
+Depois disso, em qualquer requisição autenticada, envie o header:
+
+Authorization: Bearer <token>
+
+
+e no seu controller protegido:
+
+before_action :authenticate_user!
+
+
+O Devise vai reconhecer o token automaticamente ✅
+
+🧠 Dica bônus
+
+Se quiser melhorar a segurança, defina um tempo de expiração curto no config/initializers/devise.rb:
+
+jwt.expiration_time = 30.minutes.to_i
+
+
+Quer que eu te mostre como criar uma rota protegida (ex: /profile) que retorna o usuário autenticado via JWT para testar isso na prática?
