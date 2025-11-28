@@ -8,4 +8,13 @@ EXIBIR MENSAGENS DE AVISO NO RAILS
   <% end %>
 
 2- app/helpers/application_helper.rb
+def bootstrap_class_for(type)
+    type = type.to_s
 
+    return 'success' if ['success', 'notice'].include?(type)
+    return 'danger'  if ['error', 'alert', 'danger'].include?(type)
+    return 'warning' if type == 'warning'
+    return 'info'    if type == 'info'
+
+    'secondary'
+end
