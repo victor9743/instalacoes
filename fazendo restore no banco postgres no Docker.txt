@@ -1,10 +1,10 @@
 fazendo restore no banco postgres no Docker
 
 Se o arquivo estiver fora do container e quiser copiar primeiro
-docker cp Moodle_2024_20260604.sql postgres_db:/tmp/
+docker cp arquivo.sql postgres_db:/tmp/
 
 Depois:
 docker exec -it postgres_db bash
 
 E dentro do container:
-psql -U user -d moodle_2024 < /tmp/Moodle_2024_20260604.sql
+psql -U user -d banco_2024 < /tmp/arquivo.sql
